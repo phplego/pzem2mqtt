@@ -5,7 +5,7 @@ class MeasureService{
     private:
 
         // Interval in milliseconds of the data reading
-        unsigned int        interval            = 1000;     // 1 second by default
+        unsigned long       interval            = 1000;     // 1 second by default
         unsigned long       lastUpdateTime      = 0;
 
         PZEM004Tv30 *       pzem;
@@ -28,6 +28,7 @@ class MeasureService{
     private:
         void doMeasurement()
         {
+            Serial.println("MeasureService::doMeasurement()"); 
             this->power       = pzem->power();
             
             if(!isnan(this->power)){
@@ -64,16 +65,18 @@ class MeasureService{
 
         void loop()
         {
+            Serial.println("MeasureService::loop()");
             if(!ready) return;
+            Serial.println("MeasureService::loop() 2");
 
             unsigned long now = millis();
 
             // Take a measurement at a fixed time (interval milliseconds)
             if ( !lastUpdateTime || now - lastUpdateTime > interval ) { 
                 this->doMeasurement();
+                lastUpdateTime = now;
             }
 
-            lastUpdateTime = now;
         }
 
         float getPower(){
