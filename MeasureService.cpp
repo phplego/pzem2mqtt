@@ -65,9 +65,7 @@ class MeasureService{
 
         void loop()
         {
-            Serial.println("MeasureService::loop()");
             if(!ready) return;
-            Serial.println("MeasureService::loop() 2");
 
             unsigned long now = millis();
 
