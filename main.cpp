@@ -3,15 +3,15 @@
 #include <ArduinoJson.h>
 #include <FS.h>
 #include <WiFiManager.h>
-
+#include <ESP8266WebServer.h>
 #include <Adafruit_MQTT.h>
 #include <Adafruit_MQTT_Client.h>
-
 #include <PZEM004Tv30.h>
 
 #include "utils.h"
+#include "WebService.h"
 #include "ChangesDetector.h"
-#include "MeasureService.cpp"
+#include "MeasureService.h"
 
 #define APP_VERSION "1.13"
 
@@ -20,7 +20,7 @@
 #define MQTT_USER "change-me"       // Ingored if brocker allows guest connection
 #define MQTT_PASS "change-me"       // Ingored if brocker allows guest connection
 
-#define DEVICE_ID       "pzem004t"       // Used for MQTT topics
+#define DEVICE_ID "pzem004t"        // Used for MQTT topics
 
 
 
@@ -39,6 +39,9 @@ Adafruit_MQTT_Client mqtt(&client, MQTT_HOST, MQTT_PORT);   // MQTT client
 String output_topic = String() + "wifi2mqtt/" + DEVICE_ID;
 Adafruit_MQTT_Publish   mqtt_publish        = Adafruit_MQTT_Publish     (&mqtt, output_topic.c_str());
 
+ESP8266WebServer webServer(80);
+
+WebService routes(&wifiManager, &webServer);
 
 MeasureService measureService;
 
@@ -91,6 +94,8 @@ void publishState()
 void setup()
 {
     Serial.begin(115200, SERIAL_8N1, SERIAL_TX_ONLY);
+
+    SPIFFS.begin();
     
     
     // Load config
@@ -118,7 +123,7 @@ void setup()
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
 
-
+    routes.init();
 
     changesDetector.treshold = 15; // 15 watt
 
@@ -146,15 +151,14 @@ void loop()
     ArduinoOTA.handle();
     measureService.loop();
     changesDetector.loop();
+    webServer.handleClient();
 
     // Ensure the connection to the MQTT server is alive (this will make the first
     // connection and automatically reconnect when disconnected).  See the MQTT_connect()
     MQTT_connect(&mqtt);
     
-    
     // wait X milliseconds for subscription messages
     mqtt.processPackets(10);
-
     
     // publish state every publishInterval milliseconds
     if(!lastPublishTime || millis() > lastPublishTime + publishInterval)
@@ -163,7 +167,6 @@ void loop()
         publishState();
     }
 
-
-    delay(500);
+    delay(50);
 }
 

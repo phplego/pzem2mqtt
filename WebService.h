@@ -1,0 +1,24 @@
+#pragma once
+
+#include <Arduino.h>
+#include <WiFiManager.h>
+#include <ESP8266WebServer.h>
+#include <FS.h>
+#include "utils.h"
+#include "MeasureService.h"
+
+
+
+class WebService {
+    public:
+        WiFiManager*        wifiManager;
+        ESP8266WebServer*   server;
+    
+    public:
+        // Default Constructor 
+        WebService(WiFiManager*, ESP8266WebServer*); 
+        void init();
+
+    private:
+        bool handleFileRead(String path);
+};

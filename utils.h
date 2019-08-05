@@ -1,7 +1,10 @@
 #pragma once
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
+#include <FS.h>
 #include <Adafruit_MQTT_Client.h>
+
 
 String getContentType(String filename);
 bool mountSpiffs(void); 

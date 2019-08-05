@@ -1,8 +1,5 @@
 
-#include <Arduino.h>
-#include <ArduinoJson.h>
-#include <FS.h>
-#include <Adafruit_MQTT_Client.h>
+#include "utils.h"
 
 
 String getContentType(String filename) { // determine the filetype of a given filename, based on the extension
