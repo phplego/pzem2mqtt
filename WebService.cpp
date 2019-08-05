@@ -1,22 +1,34 @@
 #include "WebService.h"
 
 
-WebService::WebService(WiFiManager* _wifiManager, ESP8266WebServer* _server)
+WebService::WebService(WiFiManager* _wifiManager)
 {
     this->wifiManager   = _wifiManager;
-    this->server        = _server;
+    this->server        = new ESP8266WebServer (80);
 }
 
 void WebService::init()
 {
     this->server->on("/", [this](){
         String str = "<pre>"; 
-        str += String() + "     Current: " + MeasureService::instance->getCurrent() + " A \n";
-        str += String() + "       Power: " + MeasureService::instance->getPower() + " W \n";
-        str += String() + "      Energy: " + MeasureService::instance->getEnergy() + " kW/h \n";
-        str += String() + "     Voltage: " + MeasureService::instance->getVoltage() + " V \n";
-        str += String() + "        Freq: " + MeasureService::instance->getFrequency() + " Hz \n";
-        str += String() + "Power Factor: " + MeasureService::instance->getPowerFactor() + " \n";
+        str += String() + "          Current: " + MeasureService::instance->getCurrent() + " A \n";
+        str += String() + "            Power: " + MeasureService::instance->getPower() + " W \n";
+        str += String() + "           Energy: " + MeasureService::instance->getEnergy() + " kW/h \n";
+        str += String() + "          Voltage: " + MeasureService::instance->getVoltage() + " V \n";
+        str += String() + "             Freq: " + MeasureService::instance->getFrequency() + " Hz \n";
+        str += String() + "     Power Factor: " + MeasureService::instance->getPowerFactor() + " \n";
+        str += "\n";
+        
+        str += String() + "           Uptime: " + (millis() / 1000) + " \n";
+        str += String() + "      FullVersion: " + ESP.getFullVersion() + " \n";
+        str += String() + "      ESP Chip ID: " + ESP.getChipId() + " \n";
+        str += String() + "       CpuFreqMHz: " + ESP.getCpuFreqMHz() + " \n";
+        str += String() + "              VCC: " + ESP.getVcc() + " \n";
+        str += String() + "         FreeHeap: " + ESP.getFreeHeap() + " \n";
+        str += String() + "       SketchSize: " + ESP.getSketchSize() + " \n";
+        str += String() + "  FreeSketchSpace: " + ESP.getFreeSketchSpace() + " \n";
+        str += String() + "    FlashChipSize: " + ESP.getFlashChipSize() + " \n";
+        str += String() + "FlashChipRealSize: " + ESP.getFlashChipRealSize() + " \n";
         str += "</pre>";
         server->send(200, "text/html", str);     
     });
@@ -83,3 +95,8 @@ bool WebService::handleFileRead(String path)
 
 }
 
+
+void WebService::loop()
+{
+    this->server->handleClient();
+}

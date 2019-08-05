@@ -16,8 +16,9 @@ class WebService {
     
     public:
         // Default Constructor 
-        WebService(WiFiManager*, ESP8266WebServer*); 
+        WebService(WiFiManager*); 
         void init();
+        void loop();
 
     private:
         bool handleFileRead(String path);

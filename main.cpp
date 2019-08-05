@@ -39,9 +39,8 @@ Adafruit_MQTT_Client mqtt(&client, MQTT_HOST, MQTT_PORT);   // MQTT client
 String output_topic = String() + "wifi2mqtt/" + DEVICE_ID;
 Adafruit_MQTT_Publish   mqtt_publish        = Adafruit_MQTT_Publish     (&mqtt, output_topic.c_str());
 
-ESP8266WebServer webServer(80);
 
-WebService routes(&wifiManager, &webServer);
+WebService webService(&wifiManager);
 
 MeasureService measureService;
 
@@ -123,7 +122,7 @@ void setup()
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
 
-    routes.init();
+    webService.init();
 
     changesDetector.treshold = 15; // 15 watt
 
@@ -151,7 +150,7 @@ void loop()
     ArduinoOTA.handle();
     measureService.loop();
     changesDetector.loop();
-    webServer.handleClient();
+    webService.loop();
 
     // Ensure the connection to the MQTT server is alive (this will make the first
     // connection and automatically reconnect when disconnected).  See the MQTT_connect()
