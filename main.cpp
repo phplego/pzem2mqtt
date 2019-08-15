@@ -147,10 +147,20 @@ void setup()
 
 void loop()
 {
+    if (!WiFi.isConnected())
+    {
+        Serial.println("No WiFi connection.. wait for 3 sec and skip loop");
+        delay(3000);
+        return;
+    }
+
+
     ArduinoOTA.handle();
     measureService.loop();
     changesDetector.loop();
     webService.loop();
+
+    
 
     // Ensure the connection to the MQTT server is alive (this will make the first
     // connection and automatically reconnect when disconnected).  See the MQTT_connect()
