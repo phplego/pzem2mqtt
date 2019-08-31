@@ -7,13 +7,14 @@
 #include <Adafruit_MQTT.h>
 #include <Adafruit_MQTT_Client.h>
 #include <PZEM004Tv30.h>
+#include <SSD1306.h>
 
 #include "utils.h"
 #include "WebService.h"
 #include "ChangesDetector.h"
 #include "MeasureService.h"
 
-#define APP_VERSION "1.13"
+#define APP_VERSION "1.15"
 
 #define MQTT_HOST "192.168.1.157"   // MQTT host (e.g. m21.cloudmqtt.com)
 #define MQTT_PORT 11883             // MQTT port (e.g. 18076)
@@ -32,6 +33,8 @@ WiFiClient          client;                                 // WiFi Client
 PZEM004Tv30         pzem((uint8_t)0 /*D3*/, (uint8_t)2 /*D4*/);
 ChangesDetector<10> changesDetector;
 
+SSD1306             display(0x3c, 1 /*RX*/, 3 /*TX*/, GEOMETRY_128_32);
+
 
 Adafruit_MQTT_Client mqtt(&client, MQTT_HOST, MQTT_PORT);   // MQTT client
 
@@ -43,6 +46,7 @@ Adafruit_MQTT_Publish   mqtt_publish        = Adafruit_MQTT_Publish     (&mqtt, 
 WebService webService(&wifiManager);
 
 MeasureService measureService;
+
 
 
 unsigned long    lastPublishTime             = 0;
@@ -84,19 +88,52 @@ void publishState()
 
     Serial.print("MQTT published: ");
     Serial.println(jsonStr1);
+
 }
 
 
+void displayLoop() 
+{
+    display.clear();
+    display.setFont(ArialMT_Plain_10);
+
+    String str = "";
+    
+    str = String("") + measureService.getPower() + "W";
+    display.drawString(0, 0, str);
+    
+    str = String("") + String(measureService.getVoltage()) + "V";
+    display.drawString(50, 0, str);
+
+    str = String("") + String(measureService.getCurrent()) + "A ";
+    display.drawString(0, 10, str);
+    
+    str = String("") + String(measureService.getEnergy()) + "kW/h";
+    display.drawString(50, 10, str);
+
+    str = String("pf: ") + String(measureService.getPowerFactor()) + " ";
+    display.drawString(0, 20, str);
+    str = String("") + String(millis() / 1000) + "S ";
+    display.drawString(50, 20, str);
+
+    display.display();
+}
 
 
 
 void setup()
 {
-    Serial.begin(115200, SERIAL_8N1, SERIAL_TX_ONLY);
+    //Serial.begin(115200, SERIAL_8N1, SERIAL_TX_ONLY);
+
+    // Init display
+    display.init();
+    display.setContrast(1, 5, 0);
+    display.flipScreenVertically();
+    display.drawString(0, 0, "PZEM004T");
+    display.display();
 
     SPIFFS.begin();
-    
-    
+   
     // Load config
     loadConfig(gConfigFile, [](DynamicJsonDocument json){
         
@@ -134,11 +171,13 @@ void setup()
 
     // Publish state on changes detected
     changesDetector.setChangesDetectedCallback([](){
+        // do the publish
         publishState();
     });
 
     // Setup measurement service
     measureService.init();
+
 
     ArduinoOTA.begin();
 }
@@ -159,7 +198,7 @@ void loop()
     measureService.loop();
     changesDetector.loop();
     webService.loop();
-
+    displayLoop();
     
 
     // Ensure the connection to the MQTT server is alive (this will make the first
@@ -174,6 +213,9 @@ void loop()
     {
         // do the publish
         publishState();
+        
+        // redraw display
+        displayLoop();
     }
 
     delay(50);
