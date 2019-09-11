@@ -9,12 +9,12 @@
 #include <PZEM004Tv30.h>
 #include <SSD1306.h>
 
+#include "Globals.h"
 #include "utils.h"
 #include "WebService.h"
 #include "ChangesDetector.h"
 #include "MeasureService.h"
 
-#define APP_VERSION "1.15"
 
 #define MQTT_HOST "192.168.1.157"   // MQTT host (e.g. m21.cloudmqtt.com)
 #define MQTT_PORT 11883             // MQTT port (e.g. 18076)
@@ -23,6 +23,7 @@
 
 #define DEVICE_ID "pzem004t"        // Used for MQTT topics
 
+const char * Globals::appVersion = "1.16";
 
 
 const char* gConfigFile = "/config.json";
@@ -74,7 +75,7 @@ void publishState()
     jsonStr1 += String("\"energy\": ") + String(measureService.getEnergy()) + ", ";
     jsonStr1 += String("\"pf\": ") + String(measureService.getPowerFactor()) + ", ";
     jsonStr1 += String("\"uptime\": ") + String(millis() / 1000) + ", ";
-    jsonStr1 += String("\"version\": \"") + String(APP_VERSION) + "\"";
+    jsonStr1 += String("\"version\": \"") + Globals::appVersion + "\"";
     jsonStr1 += "}";
 
     // Publish state to output topic
@@ -140,7 +141,7 @@ void setup()
         Serial.println("State recovered from json.");
     });
 
-    String apName = String("esp-") + DEVICE_ID + "-v" + APP_VERSION + "-" + ESP.getChipId();
+    String apName = String("esp-") + DEVICE_ID + "-v" + Globals::appVersion + "-" + ESP.getChipId();
     apName.replace('.', '_');
     WiFi.hostname(apName);
     wifiManager.setAPStaticIPConfig(IPAddress(10, 0, 1, 1), IPAddress(10, 0, 1, 1), IPAddress(255, 255, 255, 0));
@@ -179,7 +180,7 @@ void setup()
     measureService.init();
 
 
-    ArduinoOTA.begin();
+    ArduinoOTA.begin(false);
 }
 
 
@@ -218,6 +219,6 @@ void loop()
         displayLoop();
     }
 
-    delay(50);
+    //delay(50);
 }
 
