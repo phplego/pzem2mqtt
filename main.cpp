@@ -70,10 +70,10 @@ void publishState()
     //jsonStr1 += "\"totalBytes\": " + String(fsInfo.totalBytes) + ", ";
     //jsonStr1 += "\"usedBytes\": " + String(fsInfo.usedBytes) + ", ";
     jsonStr1 += String("\"power\": ") + measureService.getPower() + ", ";
-    jsonStr1 += String("\"voltage\": ") + String(measureService.getVoltage()) + ", ";
-    jsonStr1 += String("\"current\": ") + String(measureService.getCurrent()) + ", ";
-    jsonStr1 += String("\"energy\": ") + String(measureService.getEnergy()) + ", ";
-    jsonStr1 += String("\"pf\": ") + String(measureService.getPowerFactor()) + ", ";
+    jsonStr1 += String("\"voltage\": ") + measureService.getVoltage() + ", ";
+    jsonStr1 += String("\"current\": ") + measureService.getCurrent() + ", ";
+    jsonStr1 += String("\"energy\": ") + measureService.getEnergy() + ", ";
+    jsonStr1 += String("\"pf\": ") + measureService.getPowerFactor() + ", ";
     jsonStr1 += String("\"uptime\": ") + String(millis() / 1000) + ", ";
     jsonStr1 += String("\"version\": \"") + Globals::appVersion + "\"";
     jsonStr1 += "}";
