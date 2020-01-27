@@ -23,7 +23,7 @@
 
 #define DEVICE_ID "pzem004t"        // Used for MQTT topics
 
-const char * Globals::appVersion = "1.17";
+const char * Globals::appVersion = "1.18";
 
 
 //const char* gConfigFile = "/config.json";

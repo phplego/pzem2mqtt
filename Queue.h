@@ -31,6 +31,8 @@ float Queue<S>::average(){
         sum += this->values[i];
     }
 
+    if(this->actualSize == 0) return 0; // prevent division by zero
+
     return sum / this->actualSize;
 }
 
