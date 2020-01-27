@@ -23,16 +23,16 @@
 
 #define DEVICE_ID "pzem004t"        // Used for MQTT topics
 
-const char * Globals::appVersion = "1.16";
+const char * Globals::appVersion = "1.17";
 
 
-const char* gConfigFile = "/config.json";
+//const char* gConfigFile = "/config.json";
 
 WiFiManager         wifiManager;                            // WiFi Manager
 WiFiClient          client;                                 // WiFi Client
 
 PZEM004Tv30         pzem((uint8_t)0 /*D3*/, (uint8_t)2 /*D4*/);
-ChangesDetector<10> changesDetector;
+ChangesDetector<1> changesDetector;
 
 SSD1306             display(0x3c, 1 /*RX*/, 3 /*TX*/, GEOMETRY_128_32);
 
@@ -136,10 +136,9 @@ void setup()
     SPIFFS.begin();
    
     // Load config
-    loadConfig(gConfigFile, [](DynamicJsonDocument json){
-        
-        Serial.println("State recovered from json.");
-    });
+    // loadConfig(gConfigFile, [](DynamicJsonDocument json){
+    //     Serial.println("State recovered from json.");
+    // });
 
     String apName = String("esp-") + DEVICE_ID + "-v" + Globals::appVersion + "-" + ESP.getChipId();
     apName.replace('.', '_');
