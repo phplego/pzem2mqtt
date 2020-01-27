@@ -7,13 +7,14 @@
 #include <Adafruit_MQTT.h>
 #include <Adafruit_MQTT_Client.h>
 #include <PZEM004Tv30.h>
+#include <SSD1306.h>
 
+#include "Globals.h"
 #include "utils.h"
 #include "WebService.h"
 #include "ChangesDetector.h"
 #include "MeasureService.h"
 
-#define APP_VERSION "1.13"
 
 #define MQTT_HOST "192.168.1.157"   // MQTT host (e.g. m21.cloudmqtt.com)
 #define MQTT_PORT 11883             // MQTT port (e.g. 18076)
@@ -22,15 +23,18 @@
 
 #define DEVICE_ID "pzem004t"        // Used for MQTT topics
 
+const char * Globals::appVersion = "1.18";
 
 
-const char* gConfigFile = "/config.json";
+//const char* gConfigFile = "/config.json";
 
 WiFiManager         wifiManager;                            // WiFi Manager
 WiFiClient          client;                                 // WiFi Client
 
 PZEM004Tv30         pzem((uint8_t)0 /*D3*/, (uint8_t)2 /*D4*/);
-ChangesDetector<10> changesDetector;
+ChangesDetector<1> changesDetector;
+
+SSD1306             display(0x3c, 1 /*RX*/, 3 /*TX*/, GEOMETRY_128_32);
 
 
 Adafruit_MQTT_Client mqtt(&client, MQTT_HOST, MQTT_PORT);   // MQTT client
@@ -43,6 +47,7 @@ Adafruit_MQTT_Publish   mqtt_publish        = Adafruit_MQTT_Publish     (&mqtt, 
 WebService webService(&wifiManager);
 
 MeasureService measureService;
+
 
 
 unsigned long    lastPublishTime             = 0;
@@ -65,12 +70,12 @@ void publishState()
     //jsonStr1 += "\"totalBytes\": " + String(fsInfo.totalBytes) + ", ";
     //jsonStr1 += "\"usedBytes\": " + String(fsInfo.usedBytes) + ", ";
     jsonStr1 += String("\"power\": ") + measureService.getPower() + ", ";
-    jsonStr1 += String("\"voltage\": ") + String(measureService.getVoltage()) + ", ";
-    jsonStr1 += String("\"current\": ") + String(measureService.getCurrent()) + ", ";
-    jsonStr1 += String("\"energy\": ") + String(measureService.getEnergy()) + ", ";
-    jsonStr1 += String("\"pf\": ") + String(measureService.getPowerFactor()) + ", ";
+    jsonStr1 += String("\"voltage\": ") + measureService.getVoltage() + ", ";
+    jsonStr1 += String("\"current\": ") + measureService.getCurrent() + ", ";
+    jsonStr1 += String("\"energy\": ") + measureService.getEnergy() + ", ";
+    jsonStr1 += String("\"pf\": ") + measureService.getPowerFactor() + ", ";
     jsonStr1 += String("\"uptime\": ") + String(millis() / 1000) + ", ";
-    jsonStr1 += String("\"version\": \"") + String(APP_VERSION) + "\"";
+    jsonStr1 += String("\"version\": \"") + Globals::appVersion + "\"";
     jsonStr1 += "}";
 
     // Publish state to output topic
@@ -84,26 +89,58 @@ void publishState()
 
     Serial.print("MQTT published: ");
     Serial.println(jsonStr1);
+
 }
 
 
+void displayLoop() 
+{
+    display.clear();
+    display.setFont(ArialMT_Plain_10);
+
+    String str = "";
+    
+    str = String("") + measureService.getPower() + "W";
+    display.drawString(0, 0, str);
+    
+    str = String("") + String(measureService.getVoltage()) + "V";
+    display.drawString(50, 0, str);
+
+    str = String("") + String(measureService.getCurrent()) + "A ";
+    display.drawString(0, 10, str);
+    
+    str = String("") + String(measureService.getEnergy()) + "kW/h";
+    display.drawString(50, 10, str);
+
+    str = String("pf: ") + String(measureService.getPowerFactor()) + " ";
+    display.drawString(0, 20, str);
+    str = String("") + String(millis() / 1000) + "S ";
+    display.drawString(50, 20, str);
+
+    display.display();
+}
 
 
 
 void setup()
 {
-    Serial.begin(115200, SERIAL_8N1, SERIAL_TX_ONLY);
+    //Serial.begin(115200, SERIAL_8N1, SERIAL_TX_ONLY);
+
+    // Init display
+    display.init();
+    display.setContrast(1, 5, 0);
+    display.flipScreenVertically();
+    display.drawString(0, 0, "PZEM004T");
+    display.display();
 
     SPIFFS.begin();
-    
-    
+   
     // Load config
-    loadConfig(gConfigFile, [](DynamicJsonDocument json){
-        
-        Serial.println("State recovered from json.");
-    });
+    // loadConfig(gConfigFile, [](DynamicJsonDocument json){
+    //     Serial.println("State recovered from json.");
+    // });
 
-    String apName = String("esp-") + DEVICE_ID + "-v" + APP_VERSION + "-" + ESP.getChipId();
+    String apName = String("esp-") + DEVICE_ID + "-v" + Globals::appVersion + "-" + ESP.getChipId();
     apName.replace('.', '_');
     WiFi.hostname(apName);
     wifiManager.setAPStaticIPConfig(IPAddress(10, 0, 1, 1), IPAddress(10, 0, 1, 1), IPAddress(255, 255, 255, 0));
@@ -134,13 +171,15 @@ void setup()
 
     // Publish state on changes detected
     changesDetector.setChangesDetectedCallback([](){
+        // do the publish
         publishState();
     });
 
     // Setup measurement service
     measureService.init();
 
-    ArduinoOTA.begin();
+
+    ArduinoOTA.begin(false);
 }
 
 
@@ -159,7 +198,7 @@ void loop()
     measureService.loop();
     changesDetector.loop();
     webService.loop();
-
+    displayLoop();
     
 
     // Ensure the connection to the MQTT server is alive (this will make the first
@@ -174,8 +213,11 @@ void loop()
     {
         // do the publish
         publishState();
+        
+        // redraw display
+        displayLoop();
     }
 
-    delay(50);
+    //delay(50);
 }
 

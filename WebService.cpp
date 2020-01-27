@@ -9,8 +9,17 @@ WebService::WebService(WiFiManager* _wifiManager)
 
 void WebService::init()
 {
-    this->server->on("/", [this](){
-        String str = "<pre>"; 
+
+    String menu;
+    menu += "<div>";
+    menu += "<a href='/'>index</a> ";
+    menu += "<a href='/logout'>logout</a> ";
+    menu += "</div><hr>";
+
+    this->server->on("/", [this, menu](){
+        String str = ""; 
+        str += menu;
+        str += "<pre>";
         str += String() + "          Current: " + MeasureService::instance->getCurrent() + " A \n";
         str += String() + "            Power: " + MeasureService::instance->getPower() + " W \n";
         str += String() + "           Energy: " + MeasureService::instance->getEnergy() + " kW/h \n";
@@ -19,6 +28,7 @@ void WebService::init()
         str += String() + "     Power Factor: " + MeasureService::instance->getPowerFactor() + " \n";
         str += "\n";
         
+        str += String() + " Firmware Version: " + Globals::appVersion + " \n";
         str += String() + "           Uptime: " + (millis() / 1000) + " \n";
         str += String() + "      FullVersion: " + ESP.getFullVersion() + " \n";
         str += String() + "      ESP Chip ID: " + ESP.getChipId() + " \n";
@@ -29,26 +39,37 @@ void WebService::init()
         str += String() + "  FreeSketchSpace: " + ESP.getFreeSketchSpace() + " \n";
         str += String() + "    FlashChipSize: " + ESP.getFlashChipSize() + " \n";
         str += String() + "FlashChipRealSize: " + ESP.getFlashChipRealSize() + " \n";
-        str += "</pre>";
-        server->send(200, "text/html", str);     
+        str += "</pre>"; 
+        server->send(200, "text/html; charset=utf-8", str);     
     });
+
 
     // Test route
     this->server->on("/hello", [this](){
         server->send(200, "text/html", "Hello! I'm PZEM firmware.");     
     });
 
-    // Logout
-    this->server->on("/logout", [this](){
+    // Logout (reset wifi settings)
+    this->server->on("/logout", [this, menu](){
         if(this->server->method() == HTTP_POST){
             this->server->send(200, "text/html", "OK");
             this->wifiManager->resetSettings();
+            ESP.reset();
         }
         else{
-            this->server->send(400, "text/html", "post method only");
+            String output = "";
+            output += menu;
+            output += String() + "<pre>";
+            output += String() + "Wifi network: " + WiFi.SSID() + " \n";
+            output += String() + "        RSSI: " + WiFi.RSSI() + " \n";
+            output += String() + "    hostname: " + WiFi.hostname() + " \n";
+            output += String() + "</pre>";
+            output += "<form method='post'><button>Forget</button></form>";
+            this->server->send(400, "text/html", output);
         }
     });
 
+    
     // Trying to read file (if route not found)
     this->server->onNotFound( [this](){
         // check if the file exists in the flash memory (SPIFFS), if so, send it
