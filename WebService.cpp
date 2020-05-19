@@ -13,6 +13,7 @@ void WebService::init()
     String menu;
     menu += "<div>";
     menu += "<a href='/'>index</a> ";
+    menu += "<a href='/restart'>restart</a> ";
     menu += "<a href='/logout'>logout</a> ";
     menu += "</div><hr>";
 
@@ -47,6 +48,23 @@ void WebService::init()
     // Test route
     this->server->on("/hello", [this](){
         server->send(200, "text/html", "Hello! I'm PZEM firmware.");     
+    });
+
+    // Restart ESP
+    this->server->on("/restart", [this, menu](){
+        if(this->server->method() == HTTP_POST){
+            this->server->send(200, "text/html", "OK");
+            ESP.reset();
+        }
+        else{
+            String output = "";
+            output += menu;
+            output += String() + "<pre>";
+            output += String() + "Uptime: " + (millis() / 1000) + " \n";
+            output += String() + "</pre>";
+            output += "<form method='post'><button>Restart ESP now!</button></form>";
+            this->server->send(400, "text/html", output);
+        }
     });
 
     // Logout (reset wifi settings)

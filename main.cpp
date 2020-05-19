@@ -23,7 +23,7 @@
 
 #define DEVICE_ID "pzem004t"        // Used for MQTT topics
 
-const char * Globals::appVersion = "1.18";
+const char * Globals::appVersion = "1.21";
 
 
 //const char* gConfigFile = "/config.json";
@@ -114,7 +114,17 @@ void displayLoop()
 
     str = String("pf: ") + String(measureService.getPowerFactor()) + " ";
     display.drawString(0, 20, str);
-    str = String("") + String(millis() / 1000) + "S ";
+    
+    //str = String("") + String(millis() / 1000) + "S ";
+
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        str = WiFi.localIP().toString();
+    }
+    else
+    {
+        str = "not connected";
+    }
     display.drawString(50, 20, str);
 
     display.display();
@@ -144,14 +154,13 @@ void setup()
     apName.replace('.', '_');
     WiFi.hostname(apName);
     wifiManager.setAPStaticIPConfig(IPAddress(10, 0, 1, 1), IPAddress(10, 0, 1, 1), IPAddress(255, 255, 255, 0));
+    wifiManager.setConfigPortalTimeout(60);
     wifiManager.autoConnect(apName.c_str(), "12341234"); // IMPORTANT! Blocks execution. Waits until connected
 
-    // Wait for WIFI connection
-
-    while (WiFi.status() != WL_CONNECTED)
+    // Restart if not connected
+    if (WiFi.status() != WL_CONNECTED)
     {
-        delay(10);
-        Serial.print(".");
+        ESP.restart();
     }
 
     Serial.print("\nConnected to ");
