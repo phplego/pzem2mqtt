@@ -152,7 +152,6 @@ void setup()
 
     String apName = String("esp-") + DEVICE_ID + "-v" + Globals::appVersion + "-" + ESP.getChipId();
     apName.replace('.', '_');
-    WiFi.hostname(apName);
     wifi_set_sleep_type(NONE_SLEEP_T);
 
     wifiManager.setAPStaticIPConfig(IPAddress(10, 0, 1, 1), IPAddress(10, 0, 1, 1), IPAddress(255, 255, 255, 0));
@@ -164,6 +163,9 @@ void setup()
     {
         ESP.restart();
     }
+
+    //Host name should be set AFTER the wifi connect
+    WiFi.hostname(apName);
 
     Serial.print("\nConnected to ");
     Serial.println(WiFi.SSID());
