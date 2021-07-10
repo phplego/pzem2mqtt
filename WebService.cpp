@@ -33,6 +33,7 @@ void WebService::init()
         str += String() + "           Uptime: " + (millis() / 1000) + " \n";
         str += String() + "      FullVersion: " + ESP.getFullVersion() + " \n";
         str += String() + "      ESP Chip ID: " + ESP.getChipId() + " \n";
+        str += String() + "         Hostname: " + WiFi.hostname() + " \n";
         str += String() + "       CpuFreqMHz: " + ESP.getCpuFreqMHz() + " \n";
         str += String() + "              VCC: " + ESP.getVcc() + " \n";
         str += String() + "         FreeHeap: " + ESP.getFreeHeap() + " \n";
